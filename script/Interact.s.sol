@@ -25,7 +25,7 @@ contract ClaimAirdrop is Script {
 
     function _claimAirdrop(address _airdropAddress) internal {
         vm.startBroadcast();
-        (uint8 _v, bytes32 _r, bytes32 _s) = splitSignature(signature, (uint8, bytes32, bytes32));
+        (uint8 _v, bytes32 _r, bytes32 _s) = splitSignature(signature);
         MerkleAirdrop(_airdropAddress).claim(CLAIMING_ADDRESS, CLAIMING_AMOUNT, PROOF, _v, _r, _s);
         vm.stopBroadcast();
     }
