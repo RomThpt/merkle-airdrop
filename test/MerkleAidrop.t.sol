@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {Test, console} from "forge-std/Test.sol";
 import {MerkleAirdrop} from "../src/MerkleAirdrop.sol";
 import {BagelToken} from "../src/BagelToken.sol";
+import {DeployMerkleAirdrop} from "../script/DeployMerkleAirdrop.s.sol";
 
 contract MerkleAirdropTest is Test {
     MerkleAirdrop public airdrop;
@@ -15,25 +16,26 @@ contract MerkleAirdropTest is Test {
         bytes32(0xe5ebd1e1b5a5478a944ecab36a9a954ac3b6b8216875f6524caa7a1d87096576)
     ];
     uint256 public constant AMOUNT_TO_CLAIM = 25 * 1e18;
-
+    address public gasPayer;
     address user;
     uint256 userPrivKey;
 
     function setUp() public {
-        bagelToken = new BagelToken();
-        airdrop = new MerkleAirdrop(MERKLE_ROOT, bagelToken);
-        bagelToken.mint(bagelToken.owner(), AMOUNT_TO_CLAIM * 4);
-        bagelToken.transfer(address(airdrop), AMOUNT_TO_CLAIM * 4);
+        DeployMerkleAirdrop deployer = new DeployMerkleAirdrop();
+        (airdrop, bagelToken) = deployer.deployMerkleAirdrop();
 
         (user, userPrivKey) = makeAddrAndKey("user");
+        gasPayer = makeAddr("gasPayer");
     }
 
     function testUsersCanClaim() public {
         uint256 initalBalance = bagelToken.balanceOf(user);
 
-        vm.prank(user);
-        vm.deal(user, 1 ether);
-        airdrop.claim(user, AMOUNT_TO_CLAIM, PROOF);
+        bytes32 digest = airdrop.getMessage(user, AMOUNT_TO_CLAIM);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivKey, digest);
+        vm.prank(gasPayer);
+        vm.deal(gasPayer, 1 ether);
+        airdrop.claim(user, AMOUNT_TO_CLAIM, PROOF, v, r, s);
 
         uint256 finalBalance = bagelToken.balanceOf(user);
         assertEq(finalBalance - initalBalance, AMOUNT_TO_CLAIM);

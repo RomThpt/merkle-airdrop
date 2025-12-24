@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.24;
 
-import {Script} from "forge-std/Script.sol";
+import {Script, console} from "forge-std/Script.sol";
 import {MerkleAirdrop} from "../src/MerkleAirdrop.sol";
 import {BagelToken} from "../src/BagelToken.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -15,8 +15,7 @@ contract DeployMerkleAirdrop is Script {
         vm.startBroadcast();
         bagelToken = new BagelToken();
         airdrop = new MerkleAirdrop(MERKLE_ROOT, IERC20(address(bagelToken)));
-        bagelToken.mint(msg.sender, s_amountToTransfer);
-        bagelToken.transfer(address(airdrop), s_amountToTransfer);
+        bagelToken.mint(address(airdrop), s_amountToTransfer);
         vm.stopBroadcast();
     }
 
